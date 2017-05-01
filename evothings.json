@@ -1,0 +1,27 @@
+{
+  "name": "robot",
+  "version": "1.0.0",
+  "title": "Robot",
+  "description": "A basic template for a simple Evothings app.",
+  "tags": [],
+  "libraries": [
+    {
+      "name": "jquery",
+      "version": "2.1.1"
+    }
+  ],
+  "plugins": [
+    {
+      "name": "cordova-plugin-device-motion"
+    }
+  ],
+  "index-file": "index.html",
+  "uuid": "193eb693-bd8f-44a6-b28b-f25724ba1721",
+  "icon": "app-icon.png",
+  "doc-url": "http://evothings.com/2.2/doc/examples/template-basic-app.html",
+  "long-description": "A basic template for a simple Evothings app.",
+  "cordova-id": "com.evothings.examples.templatebasicapp",
+  "author-name": "Evothings",
+  "author-email": "build@evothings.com",
+  "author-url": "https://evothings.com"
+}

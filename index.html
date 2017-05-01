@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<!--
+This is an app that demonstrates how to control an Arduio board
+using BLE (Bluetooth Low Energy).
+Please note that you must use a HM-10 compatible module for this example to work.
+-->
+<head>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, user-scalable=no,
+		shrink-to-fit=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
+
+	<title>HM-10 and Arduino LED On/Off BLE</title>
+
+	<style>
+		@import 'ui/css/evothings-app.css';
+	</style>
+
+	<script>
+	// Redirect console.log to Evothings Workbench.
+	if (window.hyper && window.hyper.log) { console.log = hyper.log }
+	window.onerror = function(msg, url, line)
+	{
+		console.log(msg + ": " + url + ":" + line);
+	};
+	</script>
+
+	<script src="cordova.js"></script>
+	<script src="libs/jquery/jquery.js"></script>
+	<script src="libs/evothings/evothings.js"></script>
+	<script src="libs/evothings/ui/ui.js"></script>
+	<script src="libs/evothings/ui/fastclick.js"></script>
+	<script src="libs/evothings/ui/hammer.min.js"></script>
+	<script src="libs/evothings/arduinoble/arduinoble.js"></script>
+
+</head>
+
+<body ontouchstart=""><!-- ontouchstart="" enables low-delay CSS transitions. -->
+
+	<header>
+		<button class="back" onclick="history.back()">
+			<img src="ui/images/arrow-left.svg" />
+		</button>
+
+		<img class="logotype" src="ui/images/logo.svg" alt="Evothings" />
+
+		<!--<button class="menu" onclick=""><img src="ui/images/menu.svg" /></button>-->
+	</header>
+
+	<h1>HM-10 and Arduino LED On/Off BLE</h1>
+
+	<p id="info">Initializing...</p>
+
+	<button class="yellow wide" onclick="app.connect()">CONECTAR</button>
+
+	<br />
+
+	<button id = "acelerar" class="green wide big" >ACELERAR</button>
+
+	<br />
+
+	<button id = "frenar" class="red wide big">FRENAR</button>
+
+	<br />
+
+	<button id = "acelerar" class="green wide big" onclick="app.send(5,3)" >PRUEBA</button>
+
+	<p id = "giroy"> Eje y </p>
+
+	<script>
+	// Application object.
+	var app = {}
+	// Connected device.
+	app.device = null;
+	// Turn on LED.
+	app.prueba = function()
+	{
+		app.device && app.device.writeDataArray(new Uint8Array([5,-3]), '0000ffe1-0000-1000-8000-00805f9b34fb');
+	};
+	// Turn off LED.
+	app.continuo = function()
+	{
+		app.device && app.device.writeDataArray(new Uint8Array([0]), '0000ffe1-0000-1000-8000-00805f9b34fb');
+	};
+
+	app.frenar = function()
+	{
+		app.device && app.device.writeDataArray(new Uint8Array([2]), '0000ffe1-0000-1000-8000-00805f9b34fb');
+	};
+
+	app.showMessage = function(info)
+	{
+		document.getElementById('info').innerHTML = info
+	};
+	// Called when BLE and other native functions are available.
+	app.onDeviceReady = function()
+	{
+		app.showMessage('Touch the connect button to begin.');
+		app.iniciaHammer();
+		app.vigilaSensores();
+	};
+	app.connect = function()
+	{
+		evothings.arduinoble.close();
+		evothings.arduinoble.connect(
+			'HMSoft', // Name of the module.
+			function(device)
+			{
+				app.device = device;
+				app.showMessage('Connected! Touch buttons to turn LED on/off.');
+				app.iniciaHammer();
+			},
+			function(errorCode)
+			{
+				app.showMessage('Connect error: ' + errorCode + '.');
+			});
+	};
+
+	app.iniciaHammer = function() {
+		var acelerar = document.getElementById('acelerar');
+
+		var ac = new Hammer(acelerar);
+
+		ac.on('press', function(ev){
+			app.send(1,0);
+		});
+		ac.on('pressup', function(ev){
+			app.send(0,0)
+		});
+
+		var frenar = document.getElementById('frenar');
+
+		var fre = new Hammer(frenar);
+
+		fre.on('press', function(ev){
+			app.send(2,0);
+		});
+		fre.on('pressup', function(ev){
+			app.send(0,0);
+		});
+
+	};
+
+	app.vigilaSensores= function(){
+		function onError() {
+			console.log('onError!');
+		}
+
+		function onSuccess(datosAceleracion) {
+
+			document.getElementById('giroy').innerHTML = datosAceleracion.y;
+			app.giro(datosAceleracion.y);
+		}
+		navigator.accelerometer.watchAcceleration(onSuccess, onError,{ frequency: 100 });
+	};
+
+	app.giro = function (datosAceleracion) {
+		if ( datosAceleracion < -2 && datosAceleracion > -4 ) {
+			app.send(0,1);
+		} else if ( datosAceleracion < -4 && datosAceleracion > -6 ){
+			app.send(0,2);
+		} else if (datosAceleracion < -6 && datosAceleracion > -8){
+			app.send(0,3);
+		} else if (datosAceleracion < -8) {
+			app.send(0,4);
+		}
+
+		if ( datosAceleracion > 2 && datosAceleracion < 4 ) {
+			app.send(0,5);
+		} else if ( datosAceleracion > 4 && datosAceleracion < 6 ){
+			app.send(0,6);
+		} else if (datosAceleracion > 6 && datosAceleracion < 8){
+			app.send(0,7);
+		} else if (datosAceleracion > 8) {
+			app.send(0,8);
+		}
+
+	};
+
+	app.send = function(a,b) {
+		app.device && app.device.writeDataArray(new Uint8Array([a,b]), '0000ffe1-0000-1000-8000-00805f9b34fb');
+	};
+
+	document.addEventListener(
+		'deviceready',
+		function() { evothings.scriptsLoaded(app.onDeviceReady()) },
+		false);
+	</script>
+
+</body>
+
+</html>
